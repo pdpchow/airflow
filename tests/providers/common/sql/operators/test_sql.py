@@ -43,6 +43,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.utils import timezone
 from airflow.utils.session import create_session
 from airflow.utils.state import State
+from airflow.utils.types import DagRunTriggeredByType
 from tests.test_utils.compat import AIRFLOW_V_2_8_PLUS
 
 pytestmark = [
@@ -1128,6 +1129,7 @@ class TestSqlBranch:
             execution_date=DEFAULT_DATE,
             state=State.RUNNING,
             data_interval=(DEFAULT_DATE, DEFAULT_DATE),
+            triggered_by=DagRunTriggeredByType.TEST,
         )
 
         mock_get_records = mock_get_db_hook.return_value.get_first
@@ -1169,6 +1171,7 @@ class TestSqlBranch:
             execution_date=DEFAULT_DATE,
             state=State.RUNNING,
             data_interval=(DEFAULT_DATE, DEFAULT_DATE),
+            triggered_by=DagRunTriggeredByType.TEST,
         )
 
         mock_get_records = mock_get_db_hook.return_value.get_first
@@ -1211,6 +1214,7 @@ class TestSqlBranch:
             execution_date=DEFAULT_DATE,
             state=State.RUNNING,
             data_interval=(DEFAULT_DATE, DEFAULT_DATE),
+            triggered_by=DagRunTriggeredByType.TEST,
         )
 
         mock_get_records = mock_get_db_hook.return_value.get_first
@@ -1254,6 +1258,7 @@ class TestSqlBranch:
             execution_date=DEFAULT_DATE,
             state=State.RUNNING,
             data_interval=(DEFAULT_DATE, DEFAULT_DATE),
+            triggered_by=DagRunTriggeredByType.TEST,
         )
 
         mock_get_records = mock_get_db_hook.return_value.get_first
@@ -1294,6 +1299,7 @@ class TestSqlBranch:
             execution_date=DEFAULT_DATE,
             state=State.RUNNING,
             data_interval=(DEFAULT_DATE, DEFAULT_DATE),
+            triggered_by=DagRunTriggeredByType.TEST,
         )
 
         mock_get_records = mock_get_db_hook.return_value.get_first
@@ -1325,6 +1331,7 @@ class TestSqlBranch:
             execution_date=DEFAULT_DATE,
             state=State.RUNNING,
             data_interval=(DEFAULT_DATE, DEFAULT_DATE),
+            triggered_by=DagRunTriggeredByType.TEST,
         )
 
         mock_get_records = mock_get_db_hook.return_value.get_first
@@ -1365,6 +1372,7 @@ class TestSqlBranch:
             execution_date=DEFAULT_DATE,
             state=State.RUNNING,
             data_interval=(DEFAULT_DATE, DEFAULT_DATE),
+            triggered_by=DagRunTriggeredByType.TEST,
         )
 
         mock_get_records = mock_get_db_hook.return_value.get_first

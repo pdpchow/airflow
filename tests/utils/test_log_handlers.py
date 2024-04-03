@@ -54,7 +54,7 @@ from airflow.utils.net import get_hostname
 from airflow.utils.session import create_session
 from airflow.utils.state import State, TaskInstanceState
 from airflow.utils.timezone import datetime
-from airflow.utils.types import DagRunType
+from airflow.utils.types import DagRunTriggeredByType, DagRunType
 from tests.test_utils.config import conf_vars
 
 pytestmark = pytest.mark.db_test
@@ -104,6 +104,7 @@ class TestFileTaskLogHandler:
             state=State.RUNNING,
             execution_date=DEFAULT_DATE,
             data_interval=dag.timetable.infer_manual_data_interval(run_after=DEFAULT_DATE),
+            triggered_by=DagRunTriggeredByType.TEST,
         )
         task = PythonOperator(
             task_id="task_for_testing_file_log_handler",
@@ -157,6 +158,7 @@ class TestFileTaskLogHandler:
             state=State.RUNNING,
             execution_date=DEFAULT_DATE,
             data_interval=dag.timetable.infer_manual_data_interval(run_after=DEFAULT_DATE),
+            triggered_by=DagRunTriggeredByType.TEST,
         )
         task = PythonOperator(
             task_id="task_for_testing_file_log_handler",
@@ -217,6 +219,7 @@ class TestFileTaskLogHandler:
             state=State.RUNNING,
             execution_date=DEFAULT_DATE,
             data_interval=dag.timetable.infer_manual_data_interval(run_after=DEFAULT_DATE),
+            triggered_by=DagRunTriggeredByType.TEST,
         )
         ti = TaskInstance(task=task, run_id=dagrun.run_id)
 
@@ -448,6 +451,7 @@ class TestFileTaskLogHandler:
             state=State.RUNNING,
             execution_date=DEFAULT_DATE,
             data_interval=dag.timetable.infer_manual_data_interval(run_after=DEFAULT_DATE),
+            triggered_by=DagRunTriggeredByType.TEST,
         )
         ti = TaskInstance(task=task, run_id=dagrun.run_id)
         ti.try_number = 3
