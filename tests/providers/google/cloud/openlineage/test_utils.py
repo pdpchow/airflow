@@ -17,19 +17,41 @@
 from __future__ import annotations
 
 import json
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
 from google.cloud.bigquery.table import Table
-from openlineage.client.facet import (
-    ColumnLineageDatasetFacet,
-    ColumnLineageDatasetFacetFieldsAdditional,
-    ColumnLineageDatasetFacetFieldsAdditionalInputFields,
-    DocumentationDatasetFacet,
-    SchemaDatasetFacet,
-    SchemaField,
-)
-from openlineage.client.run import Dataset
+
+if TYPE_CHECKING:
+    from openlineage.client.event_v2 import Dataset
+    from openlineage.client.generated.column_lineage_dataset import (
+        ColumnLineageDatasetFacet,
+        Fields,
+        InputField,
+    )
+    from openlineage.client.generated.documentation_dataset import DocumentationDatasetFacet
+    from openlineage.client.generated.schema_dataset import SchemaDatasetFacet, SchemaDatasetFacetFields
+else:
+    try:
+        from openlineage.client.event_v2 import Dataset
+        from openlineage.client.generated.column_lineage_dataset import (
+            ColumnLineageDatasetFacet,
+            Fields,
+            InputField,
+        )
+        from openlineage.client.generated.documentation_dataset import DocumentationDatasetFacet
+        from openlineage.client.generated.schema_dataset import SchemaDatasetFacet, SchemaDatasetFacetFields
+    except ImportError:
+        from openlineage.client.facet import (
+            ColumnLineageDatasetFacet,
+            ColumnLineageDatasetFacetFieldsAdditional as Fields,
+            ColumnLineageDatasetFacetFieldsAdditionalInputFields as InputField,
+            DocumentationDatasetFacet,
+            SchemaDatasetFacet,
+            SchemaField as SchemaDatasetFacetFields,
+        )
+        from openlineage.client.run import Dataset
 
 from airflow.providers.google.cloud.openlineage.utils import (
     get_facets_from_bq_table,
@@ -78,8 +100,8 @@ def test_get_facets_from_bq_table():
     expected_facets = {
         "schema": SchemaDatasetFacet(
             fields=[
-                SchemaField(name="field1", type="STRING", description="field1 description"),
-                SchemaField(name="field2", type="INTEGER"),
+                SchemaDatasetFacetFields(name="field1", type="STRING", description="field1 description"),
+                SchemaDatasetFacetFields(name="field2", type="INTEGER"),
             ]
         ),
         "documentation": DocumentationDatasetFacet(description="Table description."),
@@ -105,14 +127,14 @@ def test_get_identity_column_lineage_facet_multiple_input_datasets():
     ]
     expected_facet = ColumnLineageDatasetFacet(
         fields={
-            "field1": ColumnLineageDatasetFacetFieldsAdditional(
+            "field1": Fields(
                 inputFields=[
-                    ColumnLineageDatasetFacetFieldsAdditionalInputFields(
+                    InputField(
                         namespace="gs://first_bucket",
                         name="dir1",
                         field="field1",
                     ),
-                    ColumnLineageDatasetFacetFieldsAdditionalInputFields(
+                    InputField(
                         namespace="gs://second_bucket",
                         name="dir2",
                         field="field1",
@@ -121,14 +143,14 @@ def test_get_identity_column_lineage_facet_multiple_input_datasets():
                 transformationType="IDENTITY",
                 transformationDescription="identical",
             ),
-            "field2": ColumnLineageDatasetFacetFieldsAdditional(
+            "field2": Fields(
                 inputFields=[
-                    ColumnLineageDatasetFacetFieldsAdditionalInputFields(
+                    InputField(
                         namespace="gs://first_bucket",
                         name="dir1",
                         field="field2",
                     ),
-                    ColumnLineageDatasetFacetFieldsAdditionalInputFields(
+                    InputField(
                         namespace="gs://second_bucket",
                         name="dir2",
                         field="field2",
