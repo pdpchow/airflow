@@ -1945,7 +1945,7 @@ class SchedulerJobRunner(BaseJobRunner, LoggingMixin):
             return ExecutorLoader.load_executor(executor)
         except AirflowException as e:
             if "Unknown executor" in str(e):
-                self.log.warning("Executor, {executor}, was not found but a Task was configured to use it")
+                self.log.warning("Executor, %s, was not found but a Task was configured to use it", executor)
                 return None
             else:
                 # Re-raise any other Exception not related to unknown executors.
