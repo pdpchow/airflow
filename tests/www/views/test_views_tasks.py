@@ -1049,11 +1049,11 @@ def test_graph_view_doesnt_fail_on_recursion_error(app, dag_maker, admin_client)
         resp = admin_client.get(url, follow_redirects=True)
         assert resp.status_code == 200
 
-    
+
 def test_get_date_time_num_runs_dag_runs_form_data_graph_view(app, dag_maker, admin_client):
     """Test the get_date_time_num_runs_dag_runs_form_data function."""
     from airflow.www.views import get_date_time_num_runs_dag_runs_form_data
-    
+
     execution_date = pendulum.DateTime(2024, 1, 1, 0, 0, 0, tzinfo=pendulum.UTC)
     with dag_maker(
         dag_id="test_get_date_time_num_runs_dag_runs_form_data",
