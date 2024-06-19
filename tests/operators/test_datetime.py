@@ -31,6 +31,7 @@ from airflow.operators.empty import EmptyOperator
 from airflow.utils import timezone
 from airflow.utils.session import create_session
 from airflow.utils.state import State
+from airflow.utils.types import DagRunTriggeredByType
 
 pytestmark = pytest.mark.db_test
 
@@ -81,6 +82,7 @@ class TestBranchDateTimeOperator:
             execution_date=DEFAULT_DATE,
             state=State.RUNNING,
             data_interval=(DEFAULT_DATE, DEFAULT_DATE),
+            triggered_by=DagRunTriggeredByType.TEST,
         )
 
     def teardown_method(self):
@@ -241,6 +243,7 @@ class TestBranchDateTimeOperator:
             execution_date=in_between_date,
             state=State.RUNNING,
             data_interval=(in_between_date, in_between_date),
+            triggered_by=DagRunTriggeredByType.TEST,
         )
 
         self.branch_op.target_lower = target_lower

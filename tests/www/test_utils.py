@@ -30,6 +30,7 @@ from markupsafe import Markup
 
 from airflow.models import DagRun
 from airflow.utils import json as utils_json
+from airflow.utils.types import DagRunTriggeredByType
 from airflow.www import utils
 from airflow.www.utils import DagRunCustomSQLAInterface, json_f, wrapped_markdown
 from tests.test_utils.config import conf_vars
@@ -443,7 +444,11 @@ def test_dag_run_custom_sqla_interface_delete_no_collateral_damage(dag_maker, se
     for dag_id, date in itertools.product(dag_ids, dates):
         with dag_maker(dag_id=dag_id) as dag:
             dag.create_dagrun(
-                execution_date=date, state="running", run_type="scheduled", data_interval=(date, date)
+                execution_date=date,
+                state="running",
+                run_type="scheduled",
+                data_interval=(date, date),
+                triggered_by=DagRunTriggeredByType.TEST,
             )
     dag_runs = session.query(DagRun).all()
     assert len(dag_runs) == 9

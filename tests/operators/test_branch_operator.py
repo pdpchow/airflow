@@ -30,7 +30,7 @@ from airflow.utils import timezone
 from airflow.utils.session import create_session
 from airflow.utils.state import State
 from airflow.utils.task_group import TaskGroup
-from airflow.utils.types import DagRunType
+from airflow.utils.types import DagRunTriggeredByType, DagRunType
 
 pytestmark = pytest.mark.db_test
 
@@ -139,6 +139,7 @@ class TestBranchOperator:
             execution_date=DEFAULT_DATE,
             state=State.RUNNING,
             data_interval=(DEFAULT_DATE, DEFAULT_DATE),
+            triggered_by=DagRunTriggeredByType.TEST,
         )
 
         self.branch_op.run(start_date=DEFAULT_DATE, end_date=DEFAULT_DATE)
@@ -166,6 +167,7 @@ class TestBranchOperator:
             execution_date=DEFAULT_DATE,
             state=State.RUNNING,
             data_interval=(DEFAULT_DATE, DEFAULT_DATE),
+            triggered_by=DagRunTriggeredByType.TEST,
         )
 
         self.branch_op.run(start_date=DEFAULT_DATE, end_date=DEFAULT_DATE)
@@ -192,6 +194,7 @@ class TestBranchOperator:
             execution_date=DEFAULT_DATE,
             state=State.RUNNING,
             data_interval=(DEFAULT_DATE, DEFAULT_DATE),
+            triggered_by=DagRunTriggeredByType.TEST,
         )
 
         self.branch_op.run(start_date=DEFAULT_DATE, end_date=DEFAULT_DATE)
@@ -219,6 +222,7 @@ class TestBranchOperator:
             execution_date=DEFAULT_DATE,
             state=State.RUNNING,
             data_interval=(DEFAULT_DATE, DEFAULT_DATE),
+            triggered_by=DagRunTriggeredByType.TEST,
         )
 
         self.branch_op.run(start_date=DEFAULT_DATE, end_date=DEFAULT_DATE)

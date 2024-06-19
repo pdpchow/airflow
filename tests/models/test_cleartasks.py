@@ -33,7 +33,7 @@ from airflow.operators.empty import EmptyOperator
 from airflow.sensors.python import PythonSensor
 from airflow.utils.session import create_session
 from airflow.utils.state import DagRunState, State, TaskInstanceState
-from airflow.utils.types import DagRunType
+from airflow.utils.types import DagRunTriggeredByType, DagRunType
 from tests.models import DEFAULT_DATE
 from tests.test_utils import db
 
@@ -643,6 +643,7 @@ class TestClearTasks:
                 run_type=DagRunType.SCHEDULED,
                 session=session,
                 data_interval=(DEFAULT_DATE, DEFAULT_DATE),
+                triggered_by=DagRunTriggeredByType.TEST,
             )
             ti = dr.task_instances[0]
             ti.task = task
