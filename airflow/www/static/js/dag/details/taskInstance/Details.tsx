@@ -312,8 +312,15 @@ const Details = ({ gridInstance, taskInstance, group }: Props) => {
                   Record<string, string | null>
                 >;
 
-                let { value: field } = renderedFields[key];
-                const { renderer } = renderedFields[key];
+                const templateFieldsRenderers =
+                  taskInstance.templateFieldsRenderers as Record<
+                    string,
+                    string
+                  >;
+
+                const field = renderedFields[key];
+                let fieldString = field as unknown as string;
+                const renderer = templateFieldsRenderers[key] || null;
                 const language: string = renderer
                   ? languageMapping[renderer] ?? "plaintext"
                   : "plaintext";
@@ -321,7 +328,7 @@ const Details = ({ gridInstance, taskInstance, group }: Props) => {
                 if (field) {
                   if (typeof field !== "string") {
                     try {
-                      field = JSON.stringify(field, null, 4);
+                      fieldString = JSON.stringify(field, null, 4);
                     } catch (e) {
                       // skip
                     }
@@ -338,13 +345,13 @@ const Details = ({ gridInstance, taskInstance, group }: Props) => {
                             style={oneLight}
                             wrapLongLines
                           >
-                            {field as string}
+                            {fieldString}
                           </SyntaxHighlighter>
                           <ClipboardButton
                             ml={2}
                             mt={2}
                             iconOnly
-                            value={field as string}
+                            value={fieldString}
                           />
                         </Flex>
                       </Td>
