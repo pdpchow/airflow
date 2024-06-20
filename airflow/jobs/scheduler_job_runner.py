@@ -1931,10 +1931,14 @@ class SchedulerJobRunner(BaseJobRunner, LoggingMixin):
         In this context, we don't want to fail if the executor does not exist. Catch the exception and
         log to the user.
         """
+        # Executor name comes in as a column type which upsets mypy. Here we are "casting" the value to
+        # either None or a string to satisfy typing
         if not executor_name:
-            return None
+            executor_name = None
+        else:
+            executor_name = str(executor_name)
         try:
-            return ExecutorLoader.load_executor(str(executor_name))
+            return ExecutorLoader.load_executor(executor_name)
         except AirflowException as e:
             if "Unknown executor" in str(e):
                 self.log.warning(
