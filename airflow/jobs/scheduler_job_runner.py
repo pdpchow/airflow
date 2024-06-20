@@ -31,7 +31,7 @@ from functools import lru_cache, partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Collection, Iterable, Iterator
 
-from sqlalchemy import and_, delete, func, not_, or_, select, text, update
+from sqlalchemy import Column, and_, delete, func, not_, or_, select, text, update
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import lazyload, load_only, make_transient, selectinload
 from sqlalchemy.sql import expression
@@ -1890,14 +1890,8 @@ class SchedulerJobRunner(BaseJobRunner, LoggingMixin):
     def _executor_to_tis(self, tis: list[TaskInstance]) -> dict[BaseExecutor, list[TaskInstance]]:
         """Organize TIs into lists per their respective executor."""
         _executor_to_tis: defaultdict[BaseExecutor, list[TaskInstance]] = defaultdict(list)
-        executor: str | None
         for ti in tis:
-            if ti.executor:
-                executor = str(ti.executor)
-            else:
-                executor = None
-
-            if executor_obj := self._try_to_load_executor(executor):
+            if executor_obj := self._try_to_load_executor(ti.executor):
                 _executor_to_tis[executor_obj].append(ti)
             else:
                 continue
@@ -1919,11 +1913,7 @@ class SchedulerJobRunner(BaseJobRunner, LoggingMixin):
         # executor they're assigned to has slots available.
         tis_we_have_room_for = set()
         for ti in tis:
-            if ti.executor:
-                executor = str(ti.executor)
-            else:
-                executor = None
-            if executor_obj := self._try_to_load_executor(executor):
+            if executor_obj := self._try_to_load_executor(ti.executor):
                 ti_exec_name = executor_obj.name
             else:
                 continue
@@ -1935,17 +1925,21 @@ class SchedulerJobRunner(BaseJobRunner, LoggingMixin):
 
         return tis_we_have_room_for
 
-    def _try_to_load_executor(self, executor: str | None) -> BaseExecutor | None:
+    def _try_to_load_executor(self, executor_name: str | Column | None) -> BaseExecutor | None:
         """Try to load the given executor.
 
         In this context, we don't want to fail if the executor does not exist. Catch the exception and
         log to the user.
         """
+        if not executor_name:
+            return None
         try:
-            return ExecutorLoader.load_executor(executor)
+            return ExecutorLoader.load_executor(str(executor_name))
         except AirflowException as e:
             if "Unknown executor" in str(e):
-                self.log.warning("Executor, %s, was not found but a Task was configured to use it", executor)
+                self.log.warning(
+                    "Executor, %s, was not found but a Task was configured to use it", executor_name
+                )
                 return None
             else:
                 # Re-raise any other Exception not related to unknown executors.
