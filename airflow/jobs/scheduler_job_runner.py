@@ -692,11 +692,12 @@ class SchedulerJobRunner(BaseJobRunner, LoggingMixin):
         # it. However, with multiple executors, any of which can run up to core.parallelism TIs individually,
         # we need to make sure in the scheduler now that we don't schedule more than core.parallelism totally
         # across all executors.
+        num_occupied_slots = sum([executor.slots_occupied for executor in self.job.executors])
+        parallelism = conf.getint("core", "parallelism")
         if self.job.max_tis_per_query == 0:
-            num_occupied_slots = sum([executor.slots_occupied for executor in self.job.executors])
-            max_tis = max(0, conf.getint("core", "parallelism") - num_occupied_slots)
+            max_tis = parallelism - num_occupied_slots
         else:
-            max_tis = self.job.max_tis_per_query
+            max_tis = min(self.job.max_tis_per_query, parallelism - num_occupied_slots)
         if max_tis <= 0:
             return 0
 
@@ -1908,12 +1909,11 @@ class SchedulerJobRunner(BaseJobRunner, LoggingMixin):
         # First get a mapping of executor names to slots they have available
         executor_to_slots_available: dict[ExecutorName, int] = {}
         for executor in self.job.executors:
-            # All executors should have a name if they are initted from the executor_loader. But we need to
-            # check for None to make mypy happy.
-            if executor.name:
-                executor_to_slots_available[executor.name] = executor.slots_available
-            else:
-                raise AirflowException(f"Executor {executor} did not have a `name` field configured!")
+            if TYPE_CHECKING:
+                # All executors should have a name if they are initted from the executor_loader. But we need
+                # to check for None to make mypy happy.
+                assert executor.name
+            executor_to_slots_available[executor.name] = executor.slots_available
 
         # Loop through all the TIs we're scheduling for and add them to a set to be moved to queued if the
         # executor they're assigned to has slots available.
