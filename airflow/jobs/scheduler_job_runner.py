@@ -31,7 +31,7 @@ from functools import lru_cache, partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Collection, Iterable, Iterator
 
-from sqlalchemy import Column, and_, delete, func, not_, or_, select, text, update
+from sqlalchemy import and_, delete, func, not_, or_, select, text, update
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import lazyload, load_only, make_transient, selectinload
 from sqlalchemy.sql import expression
@@ -40,7 +40,7 @@ from airflow import settings
 from airflow.callbacks.callback_requests import DagCallbackRequest, SlaCallbackRequest, TaskCallbackRequest
 from airflow.callbacks.pipe_callback_sink import PipeCallbackSink
 from airflow.configuration import conf
-from airflow.exceptions import AirflowException, RemovedInAirflow3Warning
+from airflow.exceptions import RemovedInAirflow3Warning
 from airflow.executors.executor_loader import ExecutorLoader
 from airflow.jobs.base_job_runner import BaseJobRunner
 from airflow.jobs.job import Job, perform_heartbeat
@@ -1914,34 +1914,32 @@ class SchedulerJobRunner(BaseJobRunner, LoggingMixin):
         tis_we_have_room_for = set()
         for ti in tis:
             if executor_obj := self._try_to_load_executor(ti.executor):
-                ti_exec_name = executor_obj.name
                 if TYPE_CHECKING:
                     # All executors should have a name if they are initted from the executor_loader. But we
                     # need to check for None to make mypy happy.
-                    assert ti_exec_name
-                if executor_to_slots_available[ti_exec_name] > 0:
+                    assert executor_obj.name
+                if executor_to_slots_available[executor_obj.name] > 0:
                     tis_we_have_room_for.add(ti)
-                    executor_to_slots_available[ti_exec_name] -= 1
+                    executor_to_slots_available[executor_obj.name] -= 1
             else:
                 continue
 
         return tis_we_have_room_for
 
-    def _try_to_load_executor(self, executor_name: str | Column | None) -> BaseExecutor | None:
+    def _try_to_load_executor(self, executor_name: str | None) -> BaseExecutor | None:
         """Try to load the given executor.
 
         In this context, we don't want to fail if the executor does not exist. Catch the exception and
         log to the user.
         """
-        # Executor name comes in as a column type which upsets mypy. Here we are "casting" the value to
-        # either None or a string to satisfy typing
-        if not executor_name:
-            executor_name = None
-        else:
-            executor_name = str(executor_name)
         try:
             return ExecutorLoader.load_executor(executor_name)
-        except AirflowException as e:
+        except ValueError as e:
+            # This case should not happen unless some (as of now unknown) edge case occurs or direct DB
+            # modification, since the DAG parser will validate the tasks in the DAG and ensure the executor
+            # they request is available and if not, disallow the DAG to be scheduled.
+            # Keeping this exception handling because this is a critical issue if we do somehow find
+            # ourselves here and the user should get some feedback about that.
             if "Unknown executor" in str(e):
                 self.log.warning(
                     "Executor, %s, was not found but a Task was configured to use it", executor_name
