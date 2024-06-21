@@ -1915,10 +1915,13 @@ class SchedulerJobRunner(BaseJobRunner, LoggingMixin):
         for ti in tis:
             if executor_obj := self._try_to_load_executor(ti.executor):
                 ti_exec_name = executor_obj.name
-                if ti_exec_name:
-                    if executor_to_slots_available[ti_exec_name] > 0:
-                        tis_we_have_room_for.add(ti)
-                        executor_to_slots_available[ti_exec_name] -= 1
+                if TYPE_CHECKING:
+                    # All executors should have a name if they are initted from the executor_loader. But we
+                    # need to check for None to make mypy happy.
+                    assert ti_exec_name
+                if executor_to_slots_available[ti_exec_name] > 0:
+                    tis_we_have_room_for.add(ti)
+                    executor_to_slots_available[ti_exec_name] -= 1
             else:
                 continue
 
