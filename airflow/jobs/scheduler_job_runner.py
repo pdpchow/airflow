@@ -1893,8 +1893,6 @@ class SchedulerJobRunner(BaseJobRunner, LoggingMixin):
         for ti in tis:
             if executor_obj := self._try_to_load_executor(ti.executor):
                 _executor_to_tis[executor_obj].append(ti)
-            else:
-                continue
 
         return _executor_to_tis
 
@@ -1921,8 +1919,6 @@ class SchedulerJobRunner(BaseJobRunner, LoggingMixin):
                 if executor_to_slots_available[executor_obj.name] > 0:
                     tis_we_have_room_for.add(ti)
                     executor_to_slots_available[executor_obj.name] -= 1
-            else:
-                continue
 
         return tis_we_have_room_for
 
