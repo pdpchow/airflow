@@ -18,11 +18,12 @@
 from __future__ import annotations
 
 from unittest import mock
+
 import pytest
 
 from airflow.www import validators
 
-    
+
 class TestGreaterEqualThan:
     def setup_method(self):
         self.form_field_mock = mock.MagicMock(data="2017-05-06")
@@ -118,6 +119,7 @@ class TestValidJson:
             self._validate(
                 message="Invalid JSON: {}",
             )
+
 
 class TestValidKey:
     def setup_method(self):

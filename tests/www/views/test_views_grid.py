@@ -34,14 +34,13 @@ from airflow.utils import timezone
 from airflow.utils.state import DagRunState, TaskInstanceState
 from airflow.utils.task_group import TaskGroup
 from airflow.utils.types import DagRunType
-from airflow.utils.session import create_session
-from airflow.www.views import _safe_parse_datetime, dag_to_grid, get_date_time_num_runs_dag_runs_form_data
+from airflow.www.views import dag_to_grid
 from tests.test_utils.asserts import assert_queries_count
 from tests.test_utils.db import clear_db_datasets, clear_db_runs
 from tests.test_utils.mock_operators import MockOperator
 
 pytestmark = pytest.mark.db_test
-   
+
 if TYPE_CHECKING:
     from airflow.models.dagrun import DagRun
 
@@ -90,7 +89,10 @@ def dag_without_runs(dag_maker, session, app, monkeypatch):
 def dag_with_runs(dag_without_runs):
     date = dag_without_runs.dag.start_date
     run_1 = dag_without_runs.create_dagrun(
-        run_id="run_1", state=DagRunState.SUCCESS, run_type=DagRunType.SCHEDULED, execution_date=date
+        run_id="run_1", 
+        state=DagRunState.SUCCESS, 
+        run_type=DagRunType.SCHEDULED, 
+        execution_date=date
     )
     run_2 = dag_without_runs.create_dagrun(
         run_id="run_2",
@@ -476,7 +478,9 @@ def test_next_run_datasets(admin_client, dag_maker, session, app, monkeypatch):
         ds1_id = session.query(DatasetModel.id).filter_by(uri=datasets[0].uri).scalar()
         ds2_id = session.query(DatasetModel.id).filter_by(uri=datasets[1].uri).scalar()
         ddrq = DatasetDagRunQueue(
-            target_dag_id=DAG_ID, dataset_id=ds1_id, created_at=pendulum.DateTime(2022, 8, 2, tzinfo=UTC)
+            target_dag_id=DAG_ID, 
+            dataset_id=ds1_id, 
+            created_at=pendulum.DateTime(2022, 8, 2, tzinfo=UTC)
         )
         session.add(ddrq)
         dataset_events = [

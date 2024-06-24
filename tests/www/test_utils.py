@@ -28,17 +28,17 @@ import pendulum
 import pytest
 from bs4 import BeautifulSoup
 from flask_appbuilder.models.sqla.filters import get_field_setup_query, set_value_to_type
-from markupsafe import Markup
 from flask_wtf import FlaskForm
+from markupsafe import Markup
 from sqlalchemy.orm import Query
+from wtforms.fields import StringField, TextAreaField
+
 from airflow.models import DagRun
 from airflow.utils import json as utils_json
 from airflow.www import utils
-from airflow.www.utils import DagRunCustomSQLAInterface, json_f, wrapped_markdown
-from airflow.www.widgets import AirflowDateTimePickerROWidget, BS3TextAreaROWidget, BS3TextFieldROWidget
 from airflow.www.utils import CustomSQLAInterface, DagRunCustomSQLAInterface, json_f, wrapped_markdown
+from airflow.www.widgets import AirflowDateTimePickerROWidget, BS3TextAreaROWidget, BS3TextFieldROWidget
 from tests.test_utils.config import conf_vars
-from wtforms.fields import StringField, TextAreaField
 
 
 class TestUtils:
@@ -658,12 +658,14 @@ def test_dag_run_custom_sqla_interface_delete_no_collateral_damage(dag_maker, se
     assert len(set(x.dag_id for x in dag_runs)) == 3
     assert len(set(x.run_id for x in dag_runs)) == 3
 
+
 @pytest.fixture
 def app():
     from flask import Flask
+
     app = Flask(__name__)
-    app.config['WTF_CSRF_ENABLED'] = False
-    app.config['SECRET_KEY'] = 'secret'
+    app.config["WTF_CSRF_ENABLED"] = False
+    app.config["SECRET_KEY"] = "secret"
     with app.app_context():
         yield app
 
@@ -679,7 +681,7 @@ class TestWidgets:
         html_output = field()
 
         assert 'readonly="true"' in html_output
-        assert 'input-group datetime datetimepicker' in html_output
+        assert "input-group datetime datetimepicker" in html_output
 
     def test_bs3_text_field_ro_widget(self, app):
         class TestForm(FlaskForm):
@@ -691,7 +693,7 @@ class TestWidgets:
         html_output = field()
 
         assert 'readonly="true"' in html_output
-        assert 'form-control' in html_output
+        assert "form-control" in html_output
 
     def test_bs3_text_area_ro_widget(self, app):
         class TestForm(FlaskForm):
@@ -703,4 +705,4 @@ class TestWidgets:
         html_output = field()
 
         assert 'readonly="true"' in html_output
-        assert 'form-control' in html_output
+        assert "form-control" in html_output
