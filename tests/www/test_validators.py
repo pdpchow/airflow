@@ -163,4 +163,3 @@ class TestReadOnly:
         validator = validators.ReadOnly()
         assert validator(self.form_mock, self.form_read_only_field_mock) is None
         assert self.form_read_only_field_mock.flags.readonly is True
-        
