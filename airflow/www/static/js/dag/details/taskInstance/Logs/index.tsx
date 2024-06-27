@@ -18,7 +18,18 @@
  */
 
 import React, { useState, useEffect, useMemo } from "react";
-import { Text, Box, Flex, Checkbox, Icon, Spinner } from "@chakra-ui/react";
+import {
+  Text,
+  Box,
+  Flex,
+  Button,
+  Checkbox,
+  Icon,
+  Spinner,
+  Select,
+  IconButton,
+  ButtonGroup,
+} from "@chakra-ui/react";
 import { MdWarning } from "react-icons/md";
 
 import { getMetaValue } from "src/utils";
@@ -156,7 +167,7 @@ const Logs = ({
     <>
       {showExternalLogRedirect && externalLogName && (
         <Box my={1}>
-          <Text>View Logs in {externalLogName} (by attempts):</Text>
+          <Text>View Logs in {externalLogName} Task Instance Try Number:</Text>
           <Flex flexWrap="wrap">
             {Array.from({ length: finalTryNumber || 1 }, (_, i) => i + 1).map(
               (tryNumber) => (
@@ -256,14 +267,35 @@ const Logs = ({
       {isLoading ? (
         <Spinner />
       ) : (
-        !!parsedLogs && (
-          <LogBlock
-            parsedLogs={parsedLogs}
-            wrap={wrap}
-            tryNumber={selectedTryNumber}
-            unfoldedGroups={unfoldedLogGroups}
-            setUnfoldedLogGroup={setUnfoldedLogGroup}
+        !! parsedLogs && (
+          <>
+            <LogBlock
+              parsedLogs={parsedLogs}
+              wrap={wrap}
+              tryNumber={selectedTryNumber}
+              unfoldedGroups={unfoldedLogGroups}
+              setUnfoldedLogGroup={setUnfoldedLogGroup}
           />
+            <Box>
+              <Text as="span">Log Page Number</Text>
+              <Flex flexWrap="wrap">
+                {/* TODO: Replace [0,1] with API call to get the log size -> # required pages */}
+                {[0, 1].map((index) => (
+                  <ButtonGroup size="sm">
+                    <Button
+                      key={index}
+                      variant={selectedTryNumber === index ? "solid" : "ghost"}
+                      colorScheme="blue"
+                      onClick={() => setSelectedTryNumber(index)}
+                      data-testid={`log-attempt-select-button-${index}`}
+                    >
+                      {index}
+                    </Button>
+                  </ButtonGroup>
+                ))}
+              </Flex>
+            </Box>
+          </>
         )
       )}
     </>
