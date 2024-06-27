@@ -66,7 +66,7 @@ from airflow.utils import timezone
 from airflow.utils.helpers import chunks, is_container, prune_dict
 from airflow.utils.log.logging_mixin import LoggingMixin
 from airflow.utils.session import NEW_SESSION, provide_session
-from airflow.utils.sqlalchemy import UtcDateTime, nulls_first, tuple_in_condition, with_row_locks
+from airflow.utils.sqlalchemy import UtcDateTime, tuple_in_condition, with_row_locks
 from airflow.utils.state import DagRunState, State, TaskInstanceState
 from airflow.utils.types import NOTSET, DagRunType
 
@@ -132,8 +132,8 @@ class DagRun(Base, LoggingMixin):
     # These two must be either both NULL or both datetime.
     data_interval_start = Column(UtcDateTime)
     data_interval_end = Column(UtcDateTime)
-    # When a scheduler last attempted to schedule TIs for this DagRun
-    last_scheduling_decision = Column(UtcDateTime)
+    # When next a scheduler would attempt to schedule TIs for this DagRun
+    next_schedulable = Column(UtcDateTime, default=timezone.utcnow())
     dag_hash = Column(String(32))
     # Foreign key to LogTemplate. DagRun rows created prior to this column's
     # existence have this set to NULL. Later rows automatically populate this on
@@ -256,6 +256,12 @@ class DagRun(Base, LoggingMixin):
                 f"The run_id provided '{run_id}' does not match the pattern '{regex}' or '{RUN_ID_REGEX}'"
             )
         return run_id
+
+    def deactivate_scheduling(self):
+        self.next_schedulable = None
+
+    def activate_scheduling(self):
+        self.next_schedulable = timezone.utcnow()
 
     @property
     def stats_tags(self) -> dict[str, str]:
@@ -403,7 +409,11 @@ class DagRun(Base, LoggingMixin):
         query = (
             select(cls)
             .with_hint(cls, "USE INDEX (idx_dag_run_running_dags)", dialect_name="mysql")
-            .where(cls.state == state, cls.run_type != DagRunType.BACKFILL_JOB)
+            .where(
+                cls.state == state,
+                cls.run_type != DagRunType.BACKFILL_JOB,
+                cls.next_schedulable <= timezone.utcnow(),
+            )
             .join(DagModel, DagModel.dag_id == cls.dag_id)
             .where(DagModel.is_paused == false(), DagModel.is_active == true())
         )
@@ -411,21 +421,21 @@ class DagRun(Base, LoggingMixin):
             # For dag runs in the queued state, we check if they have reached the max_active_runs limit
             # and if so we drop them
             running_drs = (
-                select(DagRun.dag_id, func.count(DagRun.state).label("num_running"))
-                .where(DagRun.state == DagRunState.RUNNING)
-                .group_by(DagRun.dag_id)
+                select(cls.dag_id, func.count(cls.state).label("num_running"))
+                .where(cls.state == DagRunState.RUNNING)
+                .group_by(cls.dag_id)
                 .subquery()
             )
             query = query.outerjoin(running_drs, running_drs.c.dag_id == DagRun.dag_id).where(
                 func.coalesce(running_drs.c.num_running, 0) < DagModel.max_active_runs
             )
         query = query.order_by(
-            nulls_first(cls.last_scheduling_decision, session=session),
+            cls.next_schedulable,
             cls.execution_date,
         )
 
         if not settings.ALLOW_FUTURE_EXEC_DATES:
-            query = query.where(DagRun.execution_date <= func.now())
+            query = query.where(cls.execution_date <= func.now())
 
         return session.scalars(
             with_row_locks(query.limit(max_number), of=cls, session=session, skip_locked=True)
@@ -787,8 +797,6 @@ class DagRun(Base, LoggingMixin):
             def recalculate(self) -> _UnfinishedStates:
                 return self._replace(tis=[t for t in self.tis if t.state in State.unfinished])
 
-        start_dttm = timezone.utcnow()
-        self.last_scheduling_decision = start_dttm
         with Stats.timer(f"dagrun.dependency-check.{self.dag_id}"), Stats.timer(
             "dagrun.dependency-check", tags=self.stats_tags
         ):
@@ -1051,6 +1059,7 @@ class DagRun(Base, LoggingMixin):
             old_state = schedulable.state
             if not schedulable.are_dependencies_met(session=session, dep_context=dep_context):
                 old_states[schedulable.key] = old_state
+                self.deactivate_scheduling()
                 continue
             # If schedulable is not yet expanded, try doing it now. This is
             # called in two places: First and ideally in the mini scheduler at
