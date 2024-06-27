@@ -192,9 +192,17 @@ class SSHOperator(BaseOperator):
         enable_pickling = conf.getboolean("core", "enable_xcom_pickling")
         if not enable_pickling:
             result = b64encode(result).decode("utf-8")
+
+        self.on_kill()
         return result
 
     def tunnel(self) -> None:
         """Get ssh tunnel."""
         ssh_client = self.hook.get_conn()  # type: ignore[union-attr]
         ssh_client.get_transport()
+
+    def on_kill(self) -> None:
+        """Close the ssh client session."""
+        ssh_client = self.hook.get_conn()
+        ssh_client.close()
+        self.log.info("SSH client closed.")
